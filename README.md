@@ -20,6 +20,7 @@
 ## Features
 
 - ⚡️ [Vue 3](https://github.com/vuejs/core), [Vite 3](https://github.com/vitejs/vite), [pnpm](https://pnpm.io/), [ESBuild](https://github.com/evanw/esbuild) - born with fastness
+- 借用 antfu 大佬的 vitesse 写的扫雷小游戏
 
 - 🗂 [File based routing](./src/pages)
 
@@ -37,11 +38,9 @@
 
 - ☁️ Deploy on Netlify, zero-config
 
-
 <br>
 
 See [Vitesse](https://github.com/antfu/vitesse) for full featureset.
-
 
 ## Dropped Features from [Vitesse](https://github.com/antfu/vitesse)
 
