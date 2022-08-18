@@ -5,9 +5,10 @@
     </button>
 
     <a
-      icon-btn i-carbon-logo-github
+      icon-btn
+      i-carbon-logo-github
       rel="noreferrer"
-      href="https://github.com/antfu/vitesse-lite"
+      href="https://github.com/FNtbm/mine_sweeper_vue3"
       target="_blank"
       title="GitHub"
     />
