@@ -1,16 +1,16 @@
 <script setup lang="ts">
 //block状态约束
 interface BlockState {
-  x: number;
-  y: number;
-  revealed: boolean;
-  mine: boolean;
-  flagged: boolean;
-  aroundMines: number;
+  x?: number;
+  y?: number;
+  revealed?: boolean;
+  mine?: boolean;
+  flagged?: boolean;
+  aroundMines?: number;
 }
 
 //初始化
-const Size = 5;
+const Size: number = 10;
 const chunk = reactive(
   Array(Size)
     .fill("")
@@ -31,9 +31,10 @@ const chunk = reactive(
 );
 
 //生成炸弹
-function generateMines() {
+function generateMines(blockClick: BlockState) {
   for (let row of chunk) {
     for (let block of row) {
+      if (block === blockClick) continue;
       block.mine = Math.random() < 0.1;
     }
   }
@@ -53,8 +54,8 @@ const around = [
 function aroundCount(block: BlockState) {
   return around
     .map(([dx, dy]) => {
-      const cx: number = block.x + dx;
-      const cy: number = block.y + dy;
+      const cx: number = (block.x as number) + dx;
+      const cy: number = (block.y as number) + dy;
       if (cx >= 0 && cx < Size && cy >= 0 && cy < Size) {
         return chunk[cy][cx];
       }
@@ -70,7 +71,7 @@ function computeMines() {
 
       aroundCount(block).forEach((aroundBloack) => {
         if (aroundBloack.mine) {
-          block.aroundMines += 1;
+          (block.aroundMines as number) += 1;
         }
       });
     });
@@ -89,25 +90,28 @@ function zeroRevealed(block: BlockState) {
   });
 }
 
-generateMines();
-computeMines();
-
 const lose = ref(false);
 
 //block动态样式
 function blockClass(block: BlockState) {
-  if (block.revealed || lose.value) {
-    return block.mine ? "bg-red" : "text-gray";
-  }
   if (!block.revealed) {
     return "hover:bg-gray/60";
   }
+  if (block.revealed || lose.value) {
+    return block.mine ? "bg-red/50" : "text-gray";
+  }
 }
 
+let gameBegin = false;
 function onClick(block: BlockState) {
+  if (!gameBegin) {
+    generateMines(block);
+    computeMines();
+    gameBegin = true;
+  }
+
   if (block.mine) {
     lose.value = true;
-    blockClass(block);
     alert("BOMMING");
     return;
   }
@@ -126,7 +130,6 @@ function rightClick(block: BlockState) {
 }
 
 function checkGameState() {
-  console.log("check");
   const blocks = chunk.flat();
 
   if (
@@ -135,7 +138,6 @@ function checkGameState() {
     alert("YOU WIN");
   }
 }
-
 watchEffect(checkGameState);
 </script>
 
