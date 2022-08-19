@@ -1,4 +1,5 @@
 <script setup lang="ts">
+//block状态约束
 interface BlockState {
   x: number;
   y: number;
@@ -9,13 +10,12 @@ interface BlockState {
 }
 
 //初始化
-const WIDTH = 3;
-const HEIGTH = 3;
+const Size = 5;
 const chunk = reactive(
-  Array(HEIGTH)
+  Array(Size)
     .fill("")
     .map((_, y) =>
-      Array(WIDTH)
+      Array(Size)
         .fill("")
         .map(
           (_, x): BlockState => ({
@@ -55,7 +55,7 @@ function aroundCount(block: BlockState) {
     .map(([dx, dy]) => {
       const cx: number = block.x + dx;
       const cy: number = block.y + dy;
-      if (cx >= 0 && cx < WIDTH && cy >= 0 && cy < HEIGTH) {
+      if (cx >= 0 && cx < Size && cy >= 0 && cy < Size) {
         return chunk[cy][cx];
       }
     })
@@ -93,41 +93,50 @@ generateMines();
 computeMines();
 
 const lose = ref(false);
-const wine = ref(false);
+
 //block动态样式
 function blockClass(block: BlockState) {
-  if (block.revealed || lose.value || wine.value) {
+  if (block.revealed || lose.value) {
     return block.mine ? "bg-red" : "text-gray";
+  }
+  if (!block.revealed) {
+    return "hover:bg-gray/60";
   }
 }
 
 function onClick(block: BlockState) {
   if (block.mine) {
     lose.value = true;
+    blockClass(block);
     alert("BOMMING");
+    return;
   }
 
   if (!block.revealed) {
     block.revealed = true;
     zeroRevealed(block);
   }
+  // checkGameState();
 }
 
 function rightClick(block: BlockState) {
+  if (block.revealed) return;
   block.flagged = !block.flagged;
-
-  //胜利条件 所有炸弹被找到且，初炸弹外的所有格子被点开
+  // checkGameState();
 }
 
-for (let row of chunk) {
-  for (let block of row) {
-    if (block.revealed && !block.mine) {
-      if (block.flagged && block.mine) {
-        alert("YOU WIN");
-      }
-    }
+function checkGameState() {
+  console.log("check");
+  const blocks = chunk.flat();
+
+  if (
+    blocks.every((block) => (block.mine && block.flagged) || block.revealed)
+  ) {
+    alert("YOU WIN");
   }
 }
+
+watchEffect(checkGameState);
 </script>
 
 <template>
@@ -144,17 +153,12 @@ for (let row of chunk) {
         flex="~"
         items-center
         justify-center
-        hover="bg-gray/60"
         @click="onClick(block)"
         @contextmenu.prevent="rightClick(block)"
       >
-        <div v-if="block.flagged || wine" i-mdi:flag></div>
-        <div
-          v-if="block.revealed || lose || wine"
-          flex="~"
-          items-center
-          justify-center
-        >
+        <div v-if="block.flagged" i-mdi:flag></div>
+
+        <div v-if="block.revealed || lose" flex="~" items-center justify-center>
           <div v-if="block.mine" i-mdi:minecraft>'x'</div>
           <div v-else>{{ block.aroundMines }}</div>
         </div>
