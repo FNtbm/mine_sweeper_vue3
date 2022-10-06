@@ -1,5 +1,7 @@
 <script setup lang="ts">
+
 //block状态约束
+
 interface BlockState {
   x?: number;
   y?: number;
@@ -10,12 +12,12 @@ interface BlockState {
 }
 
 //初始化
-const Size: number = 10;
-const chunk = reactive(
-  Array(Size)
+let Size = ref(5);
+
+let chunk =reactive(Array(Size.value)
     .fill("")
     .map((_, y) =>
-      Array(Size)
+      Array(Size.value)
         .fill("")
         .map(
           (_, x): BlockState => ({
@@ -27,9 +29,13 @@ const chunk = reactive(
             aroundMines: 0,
           })
         )
-    )
-);
+    ))
 
+
+
+function reset(){
+  Size.value = 5
+}
 //生成炸弹
 function generateMines(blockClick: BlockState) {
   for (let row of chunk) {
@@ -56,7 +62,7 @@ function aroundCount(block: BlockState) {
     .map(([dx, dy]) => {
       const cx: number = (block.x as number) + dx;
       const cy: number = (block.y as number) + dy;
-      if (cx >= 0 && cx < Size && cy >= 0 && cy < Size) {
+      if (cx >= 0 && cx < Size.value && cy >= 0 && cy < Size.value) {
         return chunk[cy][cx];
       }
     })
@@ -69,8 +75,8 @@ function computeMines() {
     row.forEach((block) => {
       if (block.mine) return;
 
-      aroundCount(block).forEach((aroundBloack) => {
-        if (aroundBloack.mine) {
+      aroundCount(block).forEach((aroundBlock) => {
+        if (aroundBlock.mine) {
           (block.aroundMines as number) += 1;
         }
       });
@@ -82,10 +88,10 @@ function computeMines() {
 function zeroRevealed(block: BlockState) {
   if (block.aroundMines) return;
 
-  aroundCount(block).forEach((aroundBloack) => {
-    if (!aroundBloack.revealed) {
-      aroundBloack.revealed = true;
-      zeroRevealed(aroundBloack);
+  aroundCount(block).forEach((aroundBlock) => {
+    if (!aroundBlock.revealed) {
+      aroundBlock.revealed = true;
+      zeroRevealed(aroundBlock);
     }
   });
 }
@@ -94,16 +100,26 @@ const lose = ref(false);
 
 //block动态样式
 function blockClass(block: BlockState) {
-  if (!block.revealed) {
-    return "hover:bg-gray/60";
-  }
   if (block.revealed || lose.value) {
     return block.mine ? "bg-red/50" : "text-gray";
+  }
+  if (!block.revealed) {
+    return "hover:bg-gray/60";
   }
 }
 
 let gameBegin = false;
+// let gameOver:Ref<Boolean> = ref(false);
+let gameState = reactive({
+  wine:false,
+  lose:false
+})
+
+
 function onClick(block: BlockState) {
+  if(gameState.wine || gameState.lose){
+    return;
+  }
   if (!gameBegin) {
     generateMines(block);
     computeMines();
@@ -112,7 +128,9 @@ function onClick(block: BlockState) {
 
   if (block.mine) {
     lose.value = true;
-    alert("BOMMING");
+    // gameBegin = false;
+    gameState.lose = true;
+    // alert("BOMBING");
     return;
   }
 
@@ -135,16 +153,19 @@ function checkGameState() {
   if (
     blocks.every((block) => (block.mine && block.flagged) || block.revealed)
   ) {
-    alert("YOU WIN");
+    gameState.wine = true;
+    // alert("YOU WIN");
   }
 }
 watchEffect(checkGameState);
 </script>
 
 <template>
+  <Confetti :state="gameState"/>
+
   <div>
     <h1>Minesweeper</h1>
-
+    <button :onclick="reset">New Game</button>
     <div v-for="row in chunk" flex="~" items-center justify-center>
       <button
         v-for="block in row"
@@ -155,6 +176,7 @@ watchEffect(checkGameState);
         flex="~"
         items-center
         justify-center
+        active:bg-blue-3
         @click="onClick(block)"
         @contextmenu.prevent="rightClick(block)"
       >
