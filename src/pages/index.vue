@@ -12,7 +12,7 @@ interface BlockState {
 }
 
 //初始化
-let Size = ref(5);
+let Size = ref(6);
 
 let chunk =reactive(Array(Size.value)
     .fill("")
@@ -34,14 +34,14 @@ let chunk =reactive(Array(Size.value)
 
 
 function reset(){
-  Size.value = 5
+  Size.value = 3
 }
 //生成炸弹
 function generateMines(blockClick: BlockState) {
   for (let row of chunk) {
     for (let block of row) {
       if (block === blockClick) continue;
-      block.mine = Math.random() < 0.1;
+      block.mine = Math.random() < 0.2;
     }
   }
 }
@@ -147,15 +147,24 @@ function rightClick(block: BlockState) {
   // checkGameState();
 }
 
+// 设备判断
+
 function checkGameState() {
   const blocks = chunk.flat();
-
-  if (
-    blocks.every((block) => (block.mine && block.flagged) || block.revealed)
-  ) {
-    gameState.wine = true;
-    // alert("YOU WIN");
-  }
+  let sUserAgent = navigator.userAgent.toLowerCase();
+      if (/ipad|iphone|midp|rv:1.2.3.4|ucweb|android|windows ce|windows mobile/.test(sUserAgent)) {
+        if (
+    blocks.every((block) =>  (!block.revealed && block.mine) || block.revealed)
+  )  gameState.wine = true;
+        
+        //this.mobileStatus = mobile(页面通过data的mobileStatus 值做不同样式)
+      } else {
+        //跳转pc端页面
+        if (
+    blocks.every((block) => (block.mine && block.flagged) ||  block.revealed)
+  )  gameState.wine = true;
+         //this.mobileStatus = pc
+      }
 }
 watchEffect(checkGameState);
 </script>
@@ -184,7 +193,7 @@ watchEffect(checkGameState);
 
         <div v-if="block.revealed || lose" flex="~" items-center justify-center>
           <div v-if="block.mine" i-mdi:minecraft>'x'</div>
-          <div v-else>{{ block.aroundMines }}</div>
+          <div v-else>{{ !block.aroundMines?'':block.aroundMines }}</div>
         </div>
       </button>
     </div>
