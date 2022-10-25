@@ -14,7 +14,7 @@ interface BlockState {
 //初始化
 let Size = ref(6);
 
-let chunk =reactive(Array(Size.value)
+let chunk =ref(Array(Size.value)
     .fill("")
     .map((_, y) =>
       Array(Size.value)
@@ -31,17 +31,15 @@ let chunk =reactive(Array(Size.value)
         )
     ))
 
-
-
-function reset(){
-  Size.value = 3
-}
 //生成炸弹
 function generateMines(blockClick: BlockState) {
-  for (let row of chunk) {
+  for (let row of chunk.value) {
     for (let block of row) {
       if (block === blockClick) continue;
-      block.mine = Math.random() < 0.2;
+      block.mine = Math.random() < 0.15;
+      if(block.mine){
+        
+      }
     }
   }
 }
@@ -63,7 +61,7 @@ function aroundCount(block: BlockState) {
       const cx: number = (block.x as number) + dx;
       const cy: number = (block.y as number) + dy;
       if (cx >= 0 && cx < Size.value && cy >= 0 && cy < Size.value) {
-        return chunk[cy][cx];
+        return chunk.value[cy][cx];
       }
     })
     .filter((item) => item !== undefined) as BlockState[];
@@ -71,7 +69,7 @@ function aroundCount(block: BlockState) {
 
 //计算格子周边的炸弹数量
 function computeMines() {
-  chunk.forEach((row) => {
+  chunk.value.forEach((row) => {
     row.forEach((block) => {
       if (block.mine) return;
 
@@ -96,11 +94,9 @@ function zeroRevealed(block: BlockState) {
   });
 }
 
-const lose = ref(false);
-
 //block动态样式
 function blockClass(block: BlockState) {
-  if (block.revealed || lose.value) {
+  if (block.revealed || gameState.lose) {
     return block.mine ? "bg-red/50" : "text-gray";
   }
   if (!block.revealed) {
@@ -109,17 +105,16 @@ function blockClass(block: BlockState) {
 }
 
 let gameBegin = false;
-// let gameOver:Ref<Boolean> = ref(false);
 let gameState = reactive({
   wine:false,
   lose:false
 })
 
-
-function onClick(block: BlockState) {
+ function onClick(block: BlockState)   {
   if(gameState.wine || gameState.lose){
     return;
   }
+
   if (!gameBegin) {
     generateMines(block);
     computeMines();
@@ -127,7 +122,6 @@ function onClick(block: BlockState) {
   }
 
   if (block.mine) {
-    lose.value = true;
     // gameBegin = false;
     gameState.lose = true;
     // alert("BOMBING");
@@ -147,23 +141,39 @@ function rightClick(block: BlockState) {
   // checkGameState();
 }
 
-// 设备判断
+function reset(){
+  chunk.value = Array(Size.value)
+    .fill("")
+    .map((_, y) =>
+      Array(Size.value)
+        .fill("")
+        .map(
+          (_, x): BlockState => ({
+            x,
+            y,
+            revealed: false,
+            mine: false,
+            flagged: false,
+            aroundMines: 0,
+          })
+        )
+    )
+    gameBegin = false;
+    gameState.wine = false;
+    gameState.lose = false;
+}
 
 function checkGameState() {
-  const blocks = chunk.flat();
+  const blocks = chunk.value.flat();
   let sUserAgent = navigator.userAgent.toLowerCase();
       if (/ipad|iphone|midp|rv:1.2.3.4|ucweb|android|windows ce|windows mobile/.test(sUserAgent)) {
         if (
     blocks.every((block) =>  (!block.revealed && block.mine) || block.revealed)
   )  gameState.wine = true;
-        
-        //this.mobileStatus = mobile(页面通过data的mobileStatus 值做不同样式)
       } else {
-        //跳转pc端页面
         if (
     blocks.every((block) => (block.mine && block.flagged) ||  block.revealed)
   )  gameState.wine = true;
-         //this.mobileStatus = pc
       }
 }
 watchEffect(checkGameState);
@@ -174,7 +184,7 @@ watchEffect(checkGameState);
 
   <div>
     <h1>Minesweeper</h1>
-    <button :onclick="reset">New Game</button>
+    <button :onclick="reset" >New Game</button>
     <div v-for="row in chunk" flex="~" items-center justify-center>
       <button
         v-for="block in row"
@@ -191,7 +201,7 @@ watchEffect(checkGameState);
       >
         <div v-if="block.flagged" i-mdi:flag></div>
 
-        <div v-if="block.revealed || lose" flex="~" items-center justify-center>
+        <div v-if="block.revealed || gameState.lose" flex="~" items-center justify-center>
           <div v-if="block.mine" i-mdi:minecraft>'x'</div>
           <div v-else>{{ !block.aroundMines?'':block.aroundMines }}</div>
         </div>
