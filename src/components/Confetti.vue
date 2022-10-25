@@ -56,14 +56,14 @@ let colors = ['#4B0082', '#ffffff','	#DA70D6','#DC143C'];
   confetti({
     particleCount: 4,
     angle: 60,
-    spread: 55,
+    spread: 40,
     origin: { x: 0 },
     colors: colors
   });
   confetti({
     particleCount: 4,
     angle: 120,
-    spread: 55,
+    spread: 40,
     origin: { x: 1 },
     colors: colors
   });
