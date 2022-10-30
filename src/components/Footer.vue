@@ -1,6 +1,6 @@
 <template>
   <nav text-xl mt-6 inline-flex gap-2>
-    <button icon-btn @click="toggleDark()">
+    <button icon-btn @click="toggleDark(true)">
       <div dark:i-carbon-moon i-carbon-sun />
     </button>
 

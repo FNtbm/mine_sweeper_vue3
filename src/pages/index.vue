@@ -1,7 +1,6 @@
 <script setup lang="ts">
 
 //block状态约束
-
 interface BlockState {
   x?: number;
   y?: number;
@@ -32,16 +31,22 @@ let chunk =ref(Array(Size.value)
     ))
 
 //生成炸弹
+let blocks = ref(0) 
+let probability = ref(20)
+
 function generateMines(blockClick: BlockState) {
-  for (let row of chunk.value) {
-    for (let block of row) {
+   for (let row of chunk.value) {
+     for (let block of row) {
       if (block === blockClick) continue;
-      block.mine = Math.random() < 0.15;
+      block.mine = Math.random() < probability.value/100;
       if(block.mine){
-        
+        blocks.value ++
       }
     }
   }
+  aroundBlocks(blockClick).forEach(item=>{
+        item.mine = false
+      })
 }
 
 const around = [
@@ -55,7 +60,7 @@ const around = [
   [-1, 1],
 ];
 //获取周边格子的状态
-function aroundCount(block: BlockState) {
+function aroundBlocks(block: BlockState) {
   return around
     .map(([dx, dy]) => {
       const cx: number = (block.x as number) + dx;
@@ -73,7 +78,7 @@ function computeMines() {
     row.forEach((block) => {
       if (block.mine) return;
 
-      aroundCount(block).forEach((aroundBlock) => {
+      aroundBlocks(block).forEach((aroundBlock) => {
         if (aroundBlock.mine) {
           (block.aroundMines as number) += 1;
         }
@@ -86,7 +91,7 @@ function computeMines() {
 function zeroRevealed(block: BlockState) {
   if (block.aroundMines) return;
 
-  aroundCount(block).forEach((aroundBlock) => {
+  aroundBlocks(block).forEach((aroundBlock) => {
     if (!aroundBlock.revealed) {
       aroundBlock.revealed = true;
       zeroRevealed(aroundBlock);
@@ -104,7 +109,7 @@ function blockClass(block: BlockState) {
   }
 }
 
-let gameBegin = false;
+let gameInit = false;
 let gameState = reactive({
   wine:false,
   lose:false
@@ -115,10 +120,10 @@ let gameState = reactive({
     return;
   }
 
-  if (!gameBegin) {
+  if (!gameInit) {
     generateMines(block);
     computeMines();
-    gameBegin = true;
+    gameInit = true;
   }
 
   if (block.mine) {
@@ -158,15 +163,23 @@ function reset(){
           })
         )
     )
-    gameBegin = false;
+    gameInit = false;
     gameState.wine = false;
     gameState.lose = false;
+    blocks.value = 0
+}
+
+let isMobile = ref(false)
+function checkMobile(){
+  let sUserAgent = navigator.userAgent.toLowerCase();
+      if (/ipad|iphone|midp|rv:1.2.3.4|ucweb|android|windows ce|windows mobile/.test(sUserAgent)) {
+        isMobile.value = true
+  }
 }
 
 function checkGameState() {
   const blocks = chunk.value.flat();
-  let sUserAgent = navigator.userAgent.toLowerCase();
-      if (/ipad|iphone|midp|rv:1.2.3.4|ucweb|android|windows ce|windows mobile/.test(sUserAgent)) {
+      if (isMobile.value) {
         if (
     blocks.every((block) =>  (!block.revealed && block.mine) || block.revealed)
   )  gameState.wine = true;
@@ -176,19 +189,47 @@ function checkGameState() {
   )  gameState.wine = true;
       }
 }
+checkMobile()
 watchEffect(checkGameState);
+watch(Size,reset);
+
+let show = ref(true)
+setTimeout(() => {
+  show.value = false
+}, 2500);
+
 </script>
 
 <template>
   <Confetti :state="gameState"/>
+  
+  <!-- 功能区 -->
 
   <div>
-    <h1>Minesweeper</h1>
-    <button :onclick="reset" >New Game</button>
+      <h1 style="font-size:1.5rem;" mb-3>MineSweeper  <span i-mdi:minecraft>10</span></h1> 
+
+    <div flex="~" content-center  justify-center> 
+    <button i-mdi:plus-box @click="probability += probability>=90?0:10"></button>
+      <span style="font-size: 0.85em;" >{{probability}}%</span>
+    <button mr-2 i-mdi:minus-box  @click="probability += probability<=10?0:-10"></button>
+    
+    <button
+      :onclick="reset"
+       mb-3 i-mdi:refresh-circle 
+       active-rotate-360
+       transition-transform-360 
+      ></button>
+
+      <button ml-2 i-mdi:plus-box @click="Size += Size>=10?0:1"></button>
+      <span style="font-size: 0.85em;" >{{Size}}</span>
+    <button  i-mdi:minus-box  @click="Size += Size<=2?0:-1"></button>
+  </div>
+    <!-- <span>{{blocks}}</span> -->
     <div v-for="row in chunk" flex="~" items-center justify-center>
       <button
         v-for="block in row"
         :class="blockClass(block)"
+        class="block"
         w-9
         h-9
         border-1
@@ -200,12 +241,13 @@ watchEffect(checkGameState);
         @contextmenu.prevent="rightClick(block)"
       >
         <div v-if="block.flagged" i-mdi:flag></div>
-
-        <div v-if="block.revealed || gameState.lose" flex="~" items-center justify-center>
+        <div v-if="block.revealed || gameState.lose || gameState.wine" flex="~" items-center justify-center>
           <div v-if="block.mine" i-mdi:minecraft>'x'</div>
           <div v-else>{{ !block.aroundMines?'':block.aroundMines }}</div>
         </div>
       </button>
     </div>
+  <span md-2 v-if="isMobile && show"  transition-all>( 长按<span i-mdi:flag>10</span> )</span>
+
   </div>
 </template>
