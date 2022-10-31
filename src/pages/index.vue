@@ -44,10 +44,47 @@ function generateMines(blockClick: BlockState) {
       }
     }
   }
-  aroundBlocks(blockClick).forEach(item=>{
+  if(Size.value >3){
+    aroundBlocks(blockClick).forEach(item=>{
         item.mine = false
       })
+  }
+  
 }
+
+// 固定生成💣数量  --弃用：概率玩法感觉会更有趣
+// let mines = ref(10) ;
+// function generateMines(blockClick:BlockState){
+  
+//   let around = aroundBlocks(blockClick)
+//   let randomMine = ()=>{
+//     let set = true
+//     let x = Math.floor(Math.random()*Size.value)
+//     let y = Math.floor(Math.random()*Size.value)
+//     let randomBlock = chunk.value[x][y]
+    
+//     for(let item of around){
+//       if(item.x==x && item.y == y){
+//         set = false;
+//         break
+//       }
+//     }
+//     if(randomBlock.mine){
+//       set = false
+//     }
+//     if(set){
+//       randomBlock.mine = true;
+//     }
+//     return set
+//   }
+  
+//   for(let i=0;i<mines.value;i++){
+//     let success = false
+//     while(!success){
+//       success = randomMine()
+//     }
+//   }
+// }
 
 const around = [
   [1, 1],
@@ -211,6 +248,7 @@ setTimeout(() => {
     <div flex="~" content-center  justify-center> 
     <button i-mdi:plus-box @click="probability += probability>=90?0:10"></button>
       <span style="font-size: 0.85em;" >{{probability}}%</span>
+      <!-- <input w-2 h-5 bg-black type="text" value="1"> -->
     <button mr-2 i-mdi:minus-box  @click="probability += probability<=10?0:-10"></button>
     
     <button
